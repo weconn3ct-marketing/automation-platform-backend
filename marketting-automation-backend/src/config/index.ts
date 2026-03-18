@@ -34,6 +34,11 @@ export const config = {
         clientId: process.env.LINKEDIN_CLIENT_ID || '',
         clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
     },
+
+    supabase: {
+        url: process.env.SUPABASE_URL || '',
+        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    },
 } as const;
 
 export default config;

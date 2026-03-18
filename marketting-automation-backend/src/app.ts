@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes';
 import postsRoutes from './routes/posts.routes';
 import connectionsRoutes from './routes/connections.routes';
 import analyticsRoutes from './routes/analytics.routes';
+import notificationsRoutes from './routes/notifications.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -65,6 +66,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // ─── Error Handling ───────────────────────────────────────────────────────────
 app.use(notFoundHandler);
