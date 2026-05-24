@@ -73,7 +73,7 @@ export async function signup(req: Request, res: Response): Promise<void> {
             },
         });
 
-        sendSuccess(res, { user, token: accessToken, refreshToken }, 'Account created successfully', 201);
+        sendSuccess(res, { user, accessToken, refreshToken }, 'Account created successfully', 201);
     } catch (error) {
         console.error('[signup]', error);
         sendError(res, 'InternalError', 'Failed to create account', 500);
@@ -121,7 +121,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         });
 
         const { password: _pwd, ...userPublic } = user;
-        sendSuccess(res, { user: userPublic, token: accessToken, refreshToken }, 'Login successful');
+        sendSuccess(res, { user: userPublic, accessToken, refreshToken }, 'Login successful');
     } catch (error) {
         console.error('[login]', error);
         sendError(res, 'InternalError', 'Login failed', 500);
@@ -171,7 +171,7 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
             },
         });
 
-        sendSuccess(res, { token: newAccessToken, refreshToken: newRefreshToken }, 'Token refreshed');
+        sendSuccess(res, { accessToken: newAccessToken, refreshToken: newRefreshToken }, 'Token refreshed');
     } catch (error) {
         console.error('[refreshToken]', error);
         sendError(res, 'InternalError', 'Failed to refresh token', 500);
