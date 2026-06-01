@@ -4,6 +4,22 @@ export type PostStatus = 'draft' | 'scheduled' | 'published' | 'failed' | 'revie
 export type ContentType = 'text' | 'article' | 'carousel' | 'video' | 'image';
 export type ToneStyle = 'professional' | 'casual' | 'friendly' | 'formal' | 'creative' | 'humorous';
 
+// ─── OAuth ─────────────────────────────────────────────────────────────────────
+
+export interface OAuthInitiateRequest {
+    platform: 'facebook' | 'instagram' | 'linkedin';
+}
+
+export interface OAuthCallbackRequest {
+    code: string;
+    state: string;
+    error?: string;
+}
+
+export interface OAuthTokenRefreshRequest {
+    connectionId: string;
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface JwtPayload {

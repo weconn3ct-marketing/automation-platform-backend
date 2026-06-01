@@ -8,6 +8,7 @@ import config from './config';
 import authRoutes from './routes/auth.routes';
 import postsRoutes from './routes/posts.routes';
 import connectionsRoutes from './routes/connections.routes';
+import oauthRoutes from './routes/oauth.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import notificationsRoutes from './routes/notifications.routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -63,6 +64,7 @@ app.get('/health', (_req, res) => {
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/oauth', oauthRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/connections', connectionsRoutes);
 app.use('/api/analytics', analyticsRoutes);

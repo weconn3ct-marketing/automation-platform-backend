@@ -25,14 +25,22 @@ export const config = {
         apiKey: process.env.OPENAI_API_KEY || '',
     },
 
-    instagram: {
-        appId: process.env.INSTAGRAM_APP_ID || '',
-        appSecret: process.env.INSTAGRAM_APP_SECRET || '',
-    },
-
-    linkedin: {
-        clientId: process.env.LINKEDIN_CLIENT_ID || '',
-        clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+    oauth: {
+        facebook: {
+            appId: process.env.FACEBOOK_APP_ID || '',
+            appSecret: process.env.FACEBOOK_APP_SECRET || '',
+            redirectUri: process.env.FACEBOOK_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback/facebook',
+        },
+        instagram: {
+            appId: process.env.INSTAGRAM_APP_ID || '',
+            appSecret: process.env.INSTAGRAM_APP_SECRET || '',
+            redirectUri: process.env.INSTAGRAM_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback/instagram',
+        },
+        linkedin: {
+            clientId: process.env.LINKEDIN_CLIENT_ID || '',
+            clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
+            redirectUri: process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback/linkedin',
+        },
     },
 
     supabase: {
