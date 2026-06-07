@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { sendSuccess, sendError } from '../lib/helpers';
+import config from '../config';
 import {
     facebookOAuth,
     instagramOAuth,
