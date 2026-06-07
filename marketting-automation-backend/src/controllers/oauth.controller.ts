@@ -37,6 +37,31 @@ export async function initiateOAuth(req: Request, res: Response): Promise<void> 
             return;
         }
 
+        // Check if required OAuth credentials are configured
+        const oauthConfig = config.oauth[platform as 'facebook' | 'instagram' | 'linkedin'];
+        if (!oauthConfig) {
+            sendError(res, 'ConfigError', `OAuth configuration missing for ${platform}`, 500);
+            return;
+        }
+
+        // Validate platform-specific required credentials
+        if (platform === 'facebook') {
+            if (!config.oauth.facebook.appId || !config.oauth.facebook.appSecret) {
+                sendError(res, 'ConfigError', 'Facebook OAuth credentials not configured', 500);
+                return;
+            }
+        } else if (platform === 'instagram') {
+            if (!config.oauth.instagram.appId || !config.oauth.instagram.appSecret) {
+                sendError(res, 'ConfigError', 'Instagram OAuth credentials not configured', 500);
+                return;
+            }
+        } else if (platform === 'linkedin') {
+            if (!config.oauth.linkedin.clientId || !config.oauth.linkedin.clientSecret) {
+                sendError(res, 'ConfigError', 'LinkedIn OAuth credentials not configured', 500);
+                return;
+            }
+        }
+
         // Generate state token for CSRF protection
         const state = generateOAuthState();
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -72,14 +97,22 @@ export async function handleOAuthCallback(req: Request, res: Response): Promise<
         // Check for platform errors
         if (platformError) {
             console.error(`[handleOAuthCallback] ${platform} error:`, platformError);
-            res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-error?platform=${platform}&error=${platformError}`);
+            const frontendUrl = new URL(`${process.env.FRONTEND_URL}/auth/oauth-error`);
+            frontendUrl.searchParams.set('platform', platform);
+            frontendUrl.searchParams.set('error', platformError);
+            frontendUrl.searchParams.set('error_description', `OAuth provider returned error: ${platformError}`);
+            res.redirect(frontendUrl.toString());
             return;
         }
 
         // Validate required parameters
         if (!code || !state) {
             console.error('[handleOAuthCallback] Missing code or state');
-            res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-error?platform=${platform}&error=invalid_request`);
+            const frontendUrl = new URL(`${process.env.FRONTEND_URL}/auth/oauth-error`);
+            frontendUrl.searchParams.set('platform', platform);
+            frontendUrl.searchParams.set('error', 'invalid_request');
+            frontendUrl.searchParams.set('error_description', 'Missing authorization code or state');
+            res.redirect(frontendUrl.toString());
             return;
         }
 
@@ -87,7 +120,11 @@ export async function handleOAuthCallback(req: Request, res: Response): Promise<
         const stateData = oauthStates.get(state);
         if (!stateData || stateData.platform !== platform) {
             console.error('[handleOAuthCallback] Invalid or mismatched state');
-            res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-error?platform=${platform}&error=invalid_state`);
+            const frontendUrl = new URL(`${process.env.FRONTEND_URL}/auth/oauth-error`);
+            frontendUrl.searchParams.set('platform', platform);
+            frontendUrl.searchParams.set('error', 'invalid_state');
+            frontendUrl.searchParams.set('error_description', 'CSRF validation failed: invalid or expired state token');
+            res.redirect(frontendUrl.toString());
             return;
         }
 
@@ -105,7 +142,11 @@ export async function handleOAuthCallback(req: Request, res: Response): Promise<
             tokenResponse = await handler.exchangeCodeForToken(code);
         } catch (error) {
             console.error('[handleOAuthCallback] Token exchange failed:', error);
-            res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-error?platform=${platform}&error=token_exchange_failed`);
+            const frontendUrl = new URL(`${process.env.FRONTEND_URL}/auth/oauth-error`);
+            frontendUrl.searchParams.set('platform', platform);
+            frontendUrl.searchParams.set('error', 'token_exchange_failed');
+            frontendUrl.searchParams.set('error_description', `Failed to exchange authorization code: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            res.redirect(frontendUrl.toString());
             return;
         }
 
@@ -115,7 +156,11 @@ export async function handleOAuthCallback(req: Request, res: Response): Promise<
             userInfo = await handler.getUserInfo(tokenResponse.access_token);
         } catch (error) {
             console.error('[handleOAuthCallback] Failed to get user info:', error);
-            res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-error?platform=${platform}&error=user_info_failed`);
+            const frontendUrl = new URL(`${process.env.FRONTEND_URL}/auth/oauth-error`);
+            frontendUrl.searchParams.set('platform', platform);
+            frontendUrl.searchParams.set('error', 'user_info_failed');
+            frontendUrl.searchParams.set('error_description', `Failed to fetch account information: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            res.redirect(frontendUrl.toString());
             return;
         }
 
@@ -195,7 +240,11 @@ export async function handleOAuthCallback(req: Request, res: Response): Promise<
         res.redirect(redirectUrl.toString());
     } catch (error) {
         console.error('[handleOAuthCallback]', error);
-        res.redirect(`${process.env.FRONTEND_URL}/auth/oauth-error?platform=unknown&error=internal_error`);
+        const frontendUrl = new URL(`${process.env.FRONTEND_URL}/auth/oauth-error`);
+        frontendUrl.searchParams.set('platform', 'unknown');
+        frontendUrl.searchParams.set('error', 'internal_error');
+        frontendUrl.searchParams.set('error_description', `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        res.redirect(frontendUrl.toString());
     }
 }
 

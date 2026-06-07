@@ -57,8 +57,8 @@ export const facebookOAuth = {
                 },
             });
             return response.data;
-        } catch (error) {
-            console.error('[facebookOAuth.exchangeCodeForToken]', error);
+        } catch (error: any) {
+            console.error('[facebookOAuth.exchangeCodeForToken]', error?.response?.data || error);
             throw new Error('Failed to exchange Facebook auth code for token');
         }
     },
@@ -75,8 +75,8 @@ export const facebookOAuth = {
                 },
             });
             return response.data;
-        } catch (error) {
-            console.error('[facebookOAuth.getUserPages]', error);
+        } catch (error: any) {
+            console.error('[facebookOAuth.getUserPages]', error?.response?.data || error);
             throw new Error('Failed to fetch Facebook pages');
         }
     },
@@ -98,8 +98,8 @@ export const facebookOAuth = {
                 email: response.data.email,
                 picture: response.data.picture?.data?.url,
             };
-        } catch (error) {
-            console.error('[facebookOAuth.getUserInfo]', error);
+        } catch (error: any) {
+            console.error('[facebookOAuth.getUserInfo]', error?.response?.data || error);
             throw new Error('Failed to fetch Facebook user info');
         }
     },
@@ -119,6 +119,7 @@ export const facebookOAuth = {
 export const instagramOAuth = {
     /**
      * Get the OAuth authorization URL for Instagram (via Facebook)
+     * Note: Instagram OAuth goes through Facebook's OAuth endpoint
      */
     getAuthUrl(state: string): string {
         const params = new URLSearchParams({
@@ -128,7 +129,7 @@ export const instagramOAuth = {
             state,
             response_type: 'code',
         });
-        return `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+        return `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
     },
 
     /**
@@ -144,8 +145,8 @@ export const instagramOAuth = {
                 code,
             });
             return response.data;
-        } catch (error) {
-            console.error('[instagramOAuth.exchangeCodeForToken]', error);
+        } catch (error: any) {
+            console.error('[instagramOAuth.exchangeCodeForToken]', error?.response?.data || error);
             throw new Error('Failed to exchange Instagram auth code for token');
         }
     },
@@ -162,8 +163,8 @@ export const instagramOAuth = {
                 },
             });
             return response.data;
-        } catch (error) {
-            console.error('[instagramOAuth.getBusinessAccount]', error);
+        } catch (error: any) {
+            console.error('[instagramOAuth.getBusinessAccount]', error?.response?.data || error);
             throw new Error('Failed to fetch Instagram business account');
         }
     },
@@ -179,8 +180,8 @@ export const instagramOAuth = {
                 name: accountData.username,
                 picture: accountData.profile_picture_url,
             };
-        } catch (error) {
-            console.error('[instagramOAuth.getUserInfo]', error);
+        } catch (error: any) {
+            console.error('[instagramOAuth.getUserInfo]', error?.response?.data || error);
             throw new Error('Failed to fetch Instagram user info');
         }
     },
@@ -197,8 +198,8 @@ export const instagramOAuth = {
                 },
             });
             return response.data;
-        } catch (error) {
-            console.error('[instagramOAuth.refreshToken]', error);
+        } catch (error: any) {
+            console.error('[instagramOAuth.refreshToken]', error?.response?.data || error);
             throw new Error('Failed to refresh Instagram token');
         }
     },
@@ -209,13 +210,14 @@ export const instagramOAuth = {
 export const linkedinOAuth = {
     /**
      * Get the OAuth authorization URL for LinkedIn
+     * Note: Using LinkedIn API v2 scopes
      */
     getAuthUrl(state: string): string {
         const params = new URLSearchParams({
             response_type: 'code',
             client_id: config.oauth.linkedin.clientId,
             redirect_uri: config.oauth.linkedin.redirectUri,
-            scope: 'r_liteprofile,w_member_social,r_1st_connections_size',
+            scope: 'profile,email,w_member_social',
             state,
         });
         return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
@@ -242,14 +244,14 @@ export const linkedinOAuth = {
                 }
             );
             return response.data;
-        } catch (error) {
-            console.error('[linkedinOAuth.exchangeCodeForToken]', error);
+        } catch (error: any) {
+            console.error('[linkedinOAuth.exchangeCodeForToken]', error?.response?.data || error);
             throw new Error('Failed to exchange LinkedIn auth code for token');
         }
     },
 
     /**
-     * Get user info
+     * Get user info using LinkedIn API v2
      */
     async getUserInfo(accessToken: string): Promise<OAuthUserInfo> {
         try {
@@ -260,22 +262,30 @@ export const linkedinOAuth = {
                 },
             });
 
-            const emailResponse = await axios.get('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            let email = '';
+            try {
+                const emailResponse = await axios.get('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                email = emailResponse.data?.elements?.[0]?.['handle~']?.emailAddress || '';
+            } catch (emailError: any) {
+                console.warn('[linkedinOAuth.getUserInfo] Failed to get email:', emailError?.response?.data || emailError);
+            }
 
-            const email = emailResponse.data?.elements?.[0]?.['handle~']?.emailAddress || undefined;
+            const firstName = response.data.localizedFirstName || '';
+            const lastName = response.data.localizedLastName || '';
+            const fullName = `${firstName} ${lastName}`.trim();
 
             return {
                 id: response.data.id,
-                name: `${response.data.localizedFirstName} ${response.data.localizedLastName}`.trim(),
-                email,
+                name: fullName || 'LinkedIn User',
+                email: email || undefined,
             };
-        } catch (error) {
-            console.error('[linkedinOAuth.getUserInfo]', error);
+        } catch (error: any) {
+            console.error('[linkedinOAuth.getUserInfo]', error?.response?.data || error);
             throw new Error('Failed to fetch LinkedIn user info');
         }
     },
@@ -300,8 +310,8 @@ export const linkedinOAuth = {
                 }
             );
             return response.data;
-        } catch (error) {
-            console.error('[linkedinOAuth.refreshToken]', error);
+        } catch (error: any) {
+            console.error('[linkedinOAuth.refreshToken]', error?.response?.data || error);
             throw new Error('Failed to refresh LinkedIn token');
         }
     },
